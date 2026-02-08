@@ -1,5 +1,7 @@
 # BoolQuant
 
+**English** | [中文](readme_zh.md)
+
 ![](assets/logo.png)
 
 LLM-Driven Boolean Rule Evolution for Stock Selection
@@ -126,3 +128,7 @@ This focused output is designed for research and educational exploration, not as
 ## License
 
 Personal Open Research License. See LICENSE file for details.
+
+## Contact
+
+P15543223211@hotmail.com
