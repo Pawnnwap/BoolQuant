@@ -1,0 +1,22 @@
+{
+  "prefix": "60,00",
+  "service": "lmstudio",
+  "thinker_model": "qwen3-4b-instruct-2507-gemini-3-pro-preview-distill",
+  "summarizer_model": "qwen3-4b-instruct-2507",
+  "return_type": "o2c",
+  "generations": 2,
+  "attempts": 5,
+  "transaction_fee": 0.0007,
+  "runs": 10,
+  "base_log_dir": "logs_ashare",
+  "clean": false,
+  "amount_rank_enabled": true,
+  "amount_rank_direction": "top",
+  "amount_rank_n": 5,
+  "amount_rank_d": 20,
+  "start_date": "2015-01-05",
+  "end_date": "2025-12-31",
+  "train_test_ratio": 3.0,
+  "data_source": "yfinance",
+  "tushare_api_token": ""
+}
