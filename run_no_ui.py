@@ -3,6 +3,7 @@ import traceback
 import shutil
 import os
 import sys
+import json
 
 from modules.engine.trading_engine import TradingEvolutionEngine
 from modules.backtest.hard_masks import get_hard_mask_factory
@@ -26,12 +27,14 @@ DEFAULT_SUMMARIZER_MODEL = {
     "lmstudio": "qwen3-4b-instruct-2507-gemini-3-pro-preview-distill",
 }
 
+
 def get_available_models(service: str) -> list:
     if service == "ollama":
         return OLLAMA_MODELS
     elif service == "lmstudio":
         return LM_STUDIO_MODELS
     return []
+
 
 def run_once(args):
     print("🚀 Starting Trading Evolution Engine...")
@@ -82,6 +85,7 @@ def run_once(args):
         print(f"❌ Fatal error: {e}")
         traceback.print_exc()
         raise
+
 
 def main():
     parser = argparse.ArgumentParser(description="Trading Evolution Engine")
@@ -232,6 +236,18 @@ def main():
 
     args = parser.parse_args()
 
+    if args.data_source == "tushare" and args.tushare_api_token:
+        token_file = ".temp_tushare_config.json"
+        with open(token_file, "w") as f:
+            json.dump({"tushare_api_token": args.tushare_api_token}, f)
+        print(f"✅ Tushare token saved to {token_file}")
+    elif args.data_source == "tushare" and not os.path.exists(
+        ".temp_tushare_config.json"
+    ):
+        print(
+            "⚠️  Warning: Using tushare data source but no token provided and no config file found"
+        )
+
     if args.clean and os.path.exists(args.base_log_dir):
         shutil.rmtree(args.base_log_dir)
 
@@ -242,6 +258,7 @@ def main():
     print(f"\n{'=' * 80}")
     print(f"ALL {args.runs} RUNS COMPLETED!")
     print(f"{'=' * 80}")
+
 
 if __name__ == "__main__":
     main()

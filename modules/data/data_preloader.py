@@ -3,8 +3,8 @@ import numpy as np
 import os
 from typing import Optional
 
-class DataPreloader:
 
+class DataPreloader:
     def __init__(
         self,
         data_path: Optional[str] = None,
@@ -37,31 +37,53 @@ class DataPreloader:
         self.all_dates = None
 
     def load_and_preprocess(self):
-
         from .yf_data_download import update_yf_data
         from .load_tushare_data import process_parquet_directory
 
         print(f"📊 Preloading market data from {self.data_source}...")
 
         if self.data_source == "tushare":
-            if not os.path.exists(self.data_path):
+            tushare_data_dir = self.data_path
+            if not os.path.isdir(tushare_data_dir) or not any(
+                f.endswith(".parquet") for f in os.listdir(tushare_data_dir)
+            ):
                 from . import TushareDataDownloader
+                import json
+
+                token_file = ".temp_tushare_config.json"
+                if os.path.exists(token_file):
+                    with open(token_file, "r") as f:
+                        config = json.load(f)
+                    api_token = config.get("tushare_api_token")
+                else:
+                    api_token = None
+
+                if not api_token:
+                    print(
+                        "Error: Tushare API token not found. Please create .temp_tushare_config.json with your token."
+                    )
+                    raise ValueError("Tushare API token not found")
 
                 print(
-                    f"Tushare data not found at {self.data_path}. Please download Tushare data first."
+                    f"Tushare data not found in {tushare_data_dir}. Starting auto-download..."
                 )
-                raise FileNotFoundError(
-                    f"Tushare data not found at {self.data_path}. Run tushare_data_download.py first."
+                start_str = (
+                    self.start_date.replace("-", "") if self.start_date else "20150101"
                 )
+                end_str = (
+                    self.end_date.replace("-", "") if self.end_date else "20991231"
+                )
+                downloader = TushareDataDownloader(
+                    api_token=api_token, output_dir=tushare_data_dir
+                )
+                downloader.download(start_date=start_str, end_date=end_str)
 
             start_str = (
                 self.start_date.replace("-", "") if self.start_date else "20150101"
             )
             end_str = self.end_date.replace("-", "") if self.end_date else "20991231"
 
-            df_main = process_parquet_directory(
-                os.path.dirname(self.data_path), start_str, end_str
-            )
+            df_main = process_parquet_directory(tushare_data_dir, start_str, end_str)
 
         else:
             if not os.path.exists(self.data_path):
