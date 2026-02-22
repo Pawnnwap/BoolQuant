@@ -1,0 +1,29 @@
+[
+  {
+    "train": {
+      "generation": 0,
+      "attempt": 0,
+      "full_condition": "(((high + low) / 2) - close) > ((((high + low) / 2) - close).rolling_std(10))",
+      "score": 1.439649617942896,
+      "total_return": 6.007980433961317,
+      "sharpe": 1.439649617942896,
+      "calmar": 0.9789126518516248,
+      "max_drawdown": -0.745226785618579,
+      "win_rate": 0.5236051502145923,
+      "avg_win": 0.025204672762890578,
+      "avg_loss": -0.02159445793116559,
+      "trading_days": 1899
+    },
+    "test": {
+      "score": 1.3630471361072047,
+      "sharpe": 1.1595666257484656,
+      "calmar": 1.1754797920536895,
+      "total_return": 1.4498572798846447,
+      "max_drawdown": -0.4475122930829431,
+      "win_rate": 0.5060240963855421,
+      "avg_win": 0.0237495783733686,
+      "avg_loss": -0.01990853979746099,
+      "trading_days": 664
+    }
+  }
+]

@@ -10,6 +10,22 @@ LLM-Driven Boolean Rule Evolution for Stock Selection
 
 ![Demo](assets/demo.png)
 
+### Example Evolved Indicator
+
+![Indicator Demo](assets/demo_indicator.png)
+
+**Evolved Rule:**
+```
+(((high + low) / 2) - close) > ((((high + low) / 2) - close).rolling_std(10))
+```
+
+| Metric | Train (1899 days) | Test (664 days) |
+|---|---|---|
+| Sharpe | 1.44 | 1.16 |
+| Total Return | 600.8% | 145.0% |
+| Max Drawdown | -74.5% | -44.8% |
+| Win Rate | 52.4% | 50.6% |
+
 ---
 
 ## Quick Start
