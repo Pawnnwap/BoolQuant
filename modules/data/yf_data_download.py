@@ -12,9 +12,44 @@ def chunk_list(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i: i + n]
 
-def fetch_all_ashare_codes():
-    stock_codes = ak.stock_info_a_code_name()["code"]
-    return [i for i in stock_codes if i[0] in ["0", "3", "6"]]
+def _fallback_codes_from_cache(data_path: str = DEFAULT_DATA_PATH):
+    try:
+        if not os.path.exists(data_path):
+            return []
+        df = pd.read_parquet(data_path)
+        if isinstance(df.columns, pd.MultiIndex) and df.columns.nlevels >= 2:
+            codes = df.columns.get_level_values(1).unique().tolist()
+        else:
+            return []
+        cleaned = []
+        for c in codes:
+            if isinstance(c, str):
+                if c.endswith(".SZ") or c.endswith(".SS"):
+                    cleaned.append(c[:-3])
+                else:
+                    cleaned.append(c)
+        cleaned = [i for i in cleaned if i and i[0] in ["0", "3", "6"]]
+        return sorted(set(cleaned))
+    except Exception:
+        return []
+
+def fetch_all_ashare_codes(max_retries: int = 8, initial_delay: float = 1.0):
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            df_codes = ak.stock_info_a_code_name()
+            stock_codes = df_codes["code"].astype(str).tolist()
+            return [i for i in stock_codes if i and i[0] in ["0", "3", "6"]]
+        except Exception as e:
+            attempt += 1
+            if attempt >= max_retries:
+                fallback = _fallback_codes_from_cache(DEFAULT_DATA_PATH)
+                if fallback:
+                    print(f"Using cached stock list due to fetch failure: {e}")
+                    return fallback
+                raise
+            delay = initial_delay * (2 ** (attempt - 1))
+            time.sleep(delay)
 
 def get_latest_cached_date(data_path: str = DEFAULT_DATA_PATH) -> pd.Timestamp | None:
     if os.path.exists(data_path):
@@ -27,6 +62,8 @@ def update_yf_data(
     data_path: str = DEFAULT_DATA_PATH,
     batch_size: int = 200,
     force_full: bool = False,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> None:
     if force_full and os.path.exists(data_path):
         os.remove(data_path)
@@ -34,15 +71,33 @@ def update_yf_data(
 
     latest_date = get_latest_cached_date(data_path)
 
-    if latest_date is not None:
-        start_date = (latest_date + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-        print(f"Appending data starting from {start_date}")
-    else:
-        start_date = "2015-01-01"
-        print("No existing data found. Starting fresh download.")
+    computed_start = (
+        (latest_date + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+        if latest_date is not None
+        else "2015-01-01"
+    )
 
-    if start_date > pd.Timestamp.now().strftime("%Y-%m-%d"):
-        print("Data is already up to date.")
+    if start_date is not None:
+        user_start = pd.to_datetime(start_date).strftime("%Y-%m-%d")
+        start_date = (
+            max(user_start, computed_start) if latest_date is not None else user_start
+        )
+        print(f"Starting download from {start_date}")
+    else:
+        start_date = computed_start
+        if latest_date is not None:
+            print(f"Appending data starting from {start_date}")
+        else:
+            print("No existing data found. Starting fresh download.")
+
+    end_date_str = (
+        pd.to_datetime(end_date).strftime("%Y-%m-%d")
+        if end_date is not None
+        else pd.Timestamp.now().strftime("%Y-%m-%d")
+    )
+
+    if start_date > end_date_str:
+        print("Invalid date range: start_date is after end_date.")
         return
 
     dfs = []
@@ -59,7 +114,11 @@ def update_yf_data(
             stderr_buffer = StringIO()
             with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
                 df_batch = yf.download(
-                    tickers=batch, interval="1d", start=start_date, auto_adjust=False
+                    tickers=batch,
+                    interval="1d",
+                    start=start_date,
+                    end=end_date_str,
+                    auto_adjust=False,
                 )
 
             captured_output = stdout_buffer.getvalue() + stderr_buffer.getvalue()
@@ -85,10 +144,11 @@ def update_yf_data(
 
     trading_calendar = ak.tool_trade_date_hist_sina()
     trading_calendar["trade_date"] = pd.to_datetime(trading_calendar["trade_date"])
-    today = pd.Timestamp.now().normalize()
+    start_ts = pd.to_datetime(start_date)
+    end_ts = pd.to_datetime(end_date_str)
     trading_dates = trading_calendar[
-        (trading_calendar["trade_date"] >= start_date) &
-        (trading_calendar["trade_date"] <= today)
+        (trading_calendar["trade_date"] >= start_ts)
+        & (trading_calendar["trade_date"] <= end_ts)
     ]["trade_date"]
     df_main = df_main.reindex(pd.DatetimeIndex(trading_dates))
 

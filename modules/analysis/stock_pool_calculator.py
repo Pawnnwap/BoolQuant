@@ -30,8 +30,8 @@ class StockPoolCalculator:
             transformed = re.sub(pattern, replacement, transformed)
         return transformed
 
-    def load_data(self, data_path: str = "df_main.parquet"):
-        preloader = DataPreloader(data_path=data_path)
+    def load_data(self, data_path: str = "df_main.parquet", data_source: str = "yfinance"):
+        preloader = DataPreloader(data_path=data_path, data_source=data_source)
         preloader.load_and_preprocess()
         self.data = preloader
         self.evaluator = SafeConditionEvaluator(preloader)
@@ -135,13 +135,14 @@ def calculate_stock_pool(
     condition: str,
     target_date: str = None,
     data_path: str = "df_main.parquet",
+    data_source: str = "yfinance",
     prefix: str = None,
     amount_rank_direction: str = "top",
     amount_rank_n: int = 50,
     amount_rank_d: int = 20,
 ) -> Dict:
     calculator = StockPoolCalculator()
-    calculator.load_data(data_path)
+    calculator.load_data(data_path=data_path, data_source=data_source)
 
     return calculator.calculate_pool(
         condition=condition,

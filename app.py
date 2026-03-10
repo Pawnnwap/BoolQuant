@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import glob
 import json
+from datetime import datetime, date
 
 st.set_page_config(page_title="BoolQuant UI", layout="wide")
 
@@ -26,7 +27,23 @@ def save_params(params):
         json.dump(params, f, indent=2)
 
 
-def get_available_dates():
+def get_available_dates(source=None):
+    if source is None:
+        params = load_params()
+        source = params.get("data_source", "yfinance")
+
+    if source == "tushare":
+        tushare_dir = "tushare_data"
+        if os.path.isdir(tushare_dir):
+            parquet_files = sorted([f for f in os.listdir(tushare_dir) if f.endswith(".parquet")])
+            dates = []
+            for f in parquet_files:
+                d_str = f.replace(".parquet", "")
+                if len(d_str) == 8 and d_str.isdigit():
+                    dates.append(date(int(d_str[:4]), int(d_str[4:6]), int(d_str[6:])))
+            return dates
+        return []
+
     if os.path.exists("df_main.parquet"):
         df = pd.read_parquet("df_main.parquet")
         dates = sorted(df.index.unique())
@@ -148,7 +165,36 @@ with st.sidebar:
     )
 
     st.header("📊 Data Status")
-    if os.path.exists("df_main.parquet"):
+    
+    date_options = []
+
+    if data_source == "tushare":
+        tushare_dir = "tushare_data"
+        if os.path.isdir(tushare_dir):
+            parquet_files = sorted([f for f in os.listdir(tushare_dir) if f.endswith(".parquet")])
+            if parquet_files:
+                try:
+                    min_f = parquet_files[0].replace(".parquet", "")
+                    max_f = parquet_files[-1].replace(".parquet", "")
+                    
+                    min_date = date(int(min_f[:4]), int(min_f[4:6]), int(min_f[6:]))
+                    max_date = date(int(max_f[:4]), int(max_f[4:6]), int(max_f[6:]))
+                    
+                    st.success(f"Tushare data loaded: {min_date} to {max_date}")
+                    st.info(f"Daily files: {len(parquet_files)}")
+                    
+                    for f in parquet_files:
+                        d_str = f.replace(".parquet", "")
+                        if len(d_str) == 8 and d_str.isdigit():
+                            date_options.append(date(int(d_str[:4]), int(d_str[4:6]), int(d_str[6:])))
+                except Exception as e:
+                     st.warning(f"Error parsing tushare files: {e}")
+            else:
+                st.warning("No tushare data found (empty folder) - will auto-download")
+        else:
+            st.warning("No tushare data found - will auto-download")
+
+    elif os.path.exists("df_main.parquet"):
         df_check = pd.read_parquet("df_main.parquet")
         min_date = (
             df_check.index.min().date()
@@ -167,32 +213,41 @@ with st.sidebar:
         date_options = [d.date() if hasattr(d, "date") else d for d in all_dates]
     else:
         st.warning("No data found - will auto-download")
-        date_options = []
 
     st.header("📅 Date Range")
-    if date_options:
-        min_d = min(date_options)
-        max_d = max(date_options)
-        col_date1, col_date2 = st.columns(2)
-        with col_date1:
-            start_date = st.date_input(
-                "Start Date",
-                value=saved_params.get("start_date", min_d),
-                min_value=min_d,
-                max_value=max_d,
-                key="start_date_input",
-            )
-        with col_date2:
-            end_date = st.date_input(
-                "End Date",
-                value=saved_params.get("end_date", max_d),
-                min_value=min_d,
-                max_value=max_d,
-                key="end_date_input",
-            )
-    else:
-        start_date = saved_params.get("start_date", "2020-01-01")
-        end_date = saved_params.get("end_date", "2024-12-31")
+    default_min = date(2015, 1, 1)
+    default_max = datetime.now().date()
+    min_d = min(date_options) if date_options else default_min
+    max_d = max(date_options) if date_options else default_max
+
+    def _to_date(val, fallback):
+        try:
+            if isinstance(val, date):
+                return val
+            if isinstance(val, str):
+                return pd.to_datetime(val).date()
+            if hasattr(val, "date"):
+                return val.date()
+        except:
+            pass
+        return fallback
+
+    start_default = _to_date(saved_params.get("start_date"), min_d)
+    end_default = _to_date(saved_params.get("end_date"), max_d)
+
+    col_date1, col_date2 = st.columns(2)
+    with col_date1:
+        start_date = st.date_input(
+            "Start Date",
+            value=start_default,
+            key="start_date_input",
+        )
+    with col_date2:
+        end_date = st.date_input(
+            "End Date",
+            value=end_default,
+            key="end_date_input",
+        )
 
     st.header("📊 Train / Test Split")
     train_test_ratio = st.number_input(
@@ -723,9 +778,12 @@ with tab3:
         st.code("close > ma(5)")
         st.code("volume > ema(10)")
 
-    all_dates = get_available_dates()
+    all_dates = get_available_dates(data_source)
     if not all_dates:
-        st.warning("No data found. Please load df_main.parquet first.")
+        if data_source == "tushare":
+            st.warning("No data found. Please check tushare_data folder.")
+        else:
+            st.warning("No data found. Please load df_main.parquet first.")
     else:
         target_date = st.selectbox(
             "Target Date",
@@ -757,9 +815,13 @@ with tab3:
                     st.warning("Please enter a condition")
                 else:
                     try:
+                        target_data_path = "tushare_data" if data_source == "tushare" else "df_main.parquet"
+                        
                         result = calculate_stock_pool(
                             condition=condition_input,
                             target_date=target_date,
+                            data_path=target_data_path,
+                            data_source=data_source,
                             prefix=stock_prefix or None,
                             amount_rank_direction=amount_rank_direction,
                             amount_rank_n=amount_rank_n,

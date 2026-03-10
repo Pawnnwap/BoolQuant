@@ -1,7 +1,7 @@
 {
   "prefix": "60,00",
   "service": "lmstudio",
-  "thinker_model": "qwen3-4b-instruct-2507-gemini-3-pro-preview-distill",
+  "thinker_model": "qwen3-4b-instruct-nothink-v2.1",
   "summarizer_model": "qwen3-4b-instruct-2507",
   "return_type": "o2c",
   "generations": 2,
@@ -14,9 +14,9 @@
   "amount_rank_direction": "top",
   "amount_rank_n": 5,
   "amount_rank_d": 20,
-  "start_date": "2015-01-05",
+  "start_date": "2015-01-01",
   "end_date": "2025-12-31",
   "train_test_ratio": 3.0,
-  "data_source": "yfinance",
+  "data_source": "tushare",
   "tushare_api_token": ""
 }

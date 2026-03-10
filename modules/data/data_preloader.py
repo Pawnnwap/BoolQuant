@@ -90,7 +90,11 @@ class DataPreloader:
                 print(
                     f"Data file not found at {self.data_path}. Starting auto-download..."
                 )
-                update_yf_data(data_path=self.data_path)
+                update_yf_data(
+                    data_path=self.data_path,
+                    start_date=self.start_date,
+                    end_date=self.end_date,
+                )
 
             df_main = pd.read_parquet(self.data_path).sort_index()
 

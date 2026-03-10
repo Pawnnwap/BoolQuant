@@ -41,7 +41,7 @@ pip install -r requirements.txt
 **推荐的GGUF模型（需4GB+显存）：**
 
 - **思考者**（推理/分析）：  
-  [Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF](https://huggingface.co/TeichAI/Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF) 或 [Falcon-H1R-7B-GGUF](https://huggingface.co/tiiuae/Falcon-H1R-7B-GGUF)
+  [Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF](https://huggingface.co/TeichAI/Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF) 或 [Qwen3.5-4B-Claude-4.6-Opus-Reasoning-Distilled-GGUF](https://huggingface.co/Jackrong/Qwen3.5-4B-Claude-4.6-Opus-Reasoning-Distilled-GGUF)
 
 - **总结者**（最终输出）：  
   [Qwen3-4B-Instruct-2507-GGUF](https://huggingface.co/byteshape/Qwen3-4B-Instruct-2507-GGUF)
@@ -63,6 +63,11 @@ pip install -r requirements.txt
 ### 4. 运行应用
 ```bash
 streamlit run app.py
+```
+
+如果以上命令无法运行，请尝试：
+```bash
+python -m streamlit run app.py
 ```
 
 ## 界面使用

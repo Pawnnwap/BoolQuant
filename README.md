@@ -41,7 +41,7 @@ Install and run a local LLM server using **LM Studio** or **Ollama**.
 **Recommended GGUF models (4GB+ VRAM):**
 
 - **Thinker** (reasoning/analysis):  
-  [Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF](https://huggingface.co/TeichAI/Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF) or [Falcon-H1R-7B-GGUF](https://huggingface.co/tiiuae/Falcon-H1R-7B-GGUF)
+  [Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF](https://huggingface.co/TeichAI/Qwen3-4B-Instruct-2507-Gemini-3-Pro-Preview-Distill-GGUF) or [Qwen3.5-4B-Claude-4.6-Opus-Reasoning-Distilled-GGUF](https://huggingface.co/Jackrong/Qwen3.5-4B-Claude-4.6-Opus-Reasoning-Distilled-GGUF)
 
 - **Summarizer** (final output):  
   [Qwen3-4B-Instruct-2507-GGUF](https://huggingface.co/byteshape/Qwen3-4B-Instruct-2507-GGUF)
